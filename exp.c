@@ -2,18 +2,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <gmp.h>
 #include <mpi.h>
 
-unsigned long long factorial(int n) {
 
-    unsigned long long res = 1;
-
-    for (int i = 1; i <= n; ++i) {
-        res *= i;
-    }
-
-    return res;
-}
 
 int main(int argc, char** argv) {
 
@@ -25,9 +17,18 @@ int main(int argc, char** argv) {
     double start_time = 0.0;
     double end_time = 0.0;
 
-    long double partial_sum = 0.0;
-    long double sum = 0.0;
-    long double result = 0.0;
+    mpf_t partial_sum;
+    mpf_t sum;
+
+    // create mpi struct for passing big numbers
+    int count = 1;
+
+
+    mpf_init(partial_sum);
+    mpf_init(sum);
+
+    mpf_set_d(partial_sum, 0.0);
+    mpf_set_d(sum, 0.0);
 
     MPI_Status status = {0};
 
@@ -46,6 +47,18 @@ int main(int argc, char** argv) {
 
     int N = atoi(argv[1]);
 
+    mpf_t* result = (mpf_t*) calloc(N, sizeof(mpf_t));
+    if (result == NULL) {
+        printf("Error in calloc for mpf_t* result\n");
+    }
+
+    for (int i = 0; i < N; ++i) {
+
+        mpf_init(result[i]);
+        mpf_set_d(result[i], 0.0);
+
+    }
+
     if (rank == 0) {
         printf("Counting exp with number of terms: %d\n", N);
         fflush(stdout);
@@ -55,18 +68,54 @@ int main(int argc, char** argv) {
     // send the number of terms to compute to children
     MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    for (int i = rank; i < N; i += commsize) {
+    mpf_t factorial;
+    mpf_init(factorial);
+    mpf_set_d(factorial, 1.0);
 
-        partial_sum = 1.0 / factorial(i);
+    // count factorial. For now can't be made via separate function
 
-        printf("partial_sum[%d] = %Lf\n", i, partial_sum);
+    mpf_t fop;
+    mpf_init(fop);
+
+    mpz_t iop;
+    mpz_init(iop);
+
+    for (int process_id = rank; process_id < N; process_id += commsize) {
+
+        for (int i = 1; i <= process_id; ++i) {
+
+            mpz_set_si(iop, i);
+            mpf_set_z(fop, iop);
+
+            mpf_mul(factorial, factorial, fop);
+
+        }
+
+        //gmp_printf("factorial[%d] = %Ff\n", process_id, factorial);
+        //fflush(stdout);
+
+        mpf_set_d(fop, 1.0);
+        mpf_div(partial_sum, fop, factorial);
+
+        gmp_printf("partial_sum[%d] = %Ff\n", process_id, partial_sum);
         fflush(stdout);
 
-        sum += partial_sum;
+        mpf_add(sum, sum, partial_sum);
+
+        gmp_printf("sum[%d] = %Ff\n", process_id, sum);
+        fflush(stdout);
 
     }
 
-    MPI_Reduce(&sum, &result, 1, MPI_LONG_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    mpf_clear(factorial);
+    mpf_clear(fop);
+    mpz_clear(iop);
+
+    ret = MPI_Gather(&sum, 1, MPI_LONG_DOUBLE, result, N, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
+    if (ret != MPI_SUCCESS) {
+        printf("Error: MPI_Reduce failure\n");
+        exit(1);
+    }
 
     end_time = MPI_Wtime();
 
@@ -75,13 +124,25 @@ int main(int argc, char** argv) {
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == 0) {
+
         printf("Time taken: %f\n", interval);
         fflush(stdout);
-        printf("Calculated value: %.10Lf\n", result);
+        gmp_printf("Calculated value: %Ff\n", result);
         fflush(stdout);
+
     }
 
+    mpf_clear(partial_sum);
+    mpf_clear(sum);
+
+    for (int i = 0; i < N; ++i) {
+        mpf_clear(result[i]);  
+    }
+    free(result);
+
     MPI_Finalize();
+
+
 
     return 0;
 }
