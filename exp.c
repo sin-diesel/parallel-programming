@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <gmp.h>
 #include <mpi.h>
+#include <string.h>
 
-
+#define MAX_STR_SIZE 4096
+#define DEFAULT_PREC 100
 
 int main(int argc, char** argv) {
 
@@ -22,6 +24,8 @@ int main(int argc, char** argv) {
 
     // create mpi struct for passing big numbers
     int count = 1;
+
+    mpf_set_default_prec(DEFAULT_PREC);
 
 
     mpf_init(partial_sum);
@@ -60,9 +64,11 @@ int main(int argc, char** argv) {
     }
 
     if (rank == 0) {
+
         printf("Counting exp with number of terms: %d\n", N);
         fflush(stdout);
         start_time = MPI_Wtime();
+
     }
 
     // send the number of terms to compute to children
@@ -97,12 +103,12 @@ int main(int argc, char** argv) {
         mpf_set_d(fop, 1.0);
         mpf_div(partial_sum, fop, factorial);
 
-        gmp_printf("partial_sum[%d] = %Ff\n", process_id, partial_sum);
-        fflush(stdout);
+        // gmp_printf("partial_sum[%d] = %.*Ff\n", process_id, DEFAULT_PREC, partial_sum);
+        // fflush(stdout);
 
         mpf_add(sum, sum, partial_sum);
 
-        gmp_printf("sum[%d] = %Ff\n", process_id, sum);
+        gmp_printf("sum[%d] = %.*Ff\n", process_id, DEFAULT_PREC, sum);
         fflush(stdout);
 
     }
@@ -111,9 +117,22 @@ int main(int argc, char** argv) {
     mpf_clear(fop);
     mpz_clear(iop);
 
-    ret = MPI_Gather(&sum, 1, MPI_LONG_DOUBLE, result, N, MPI_LONG_DOUBLE, 0, MPI_COMM_WORLD);
+    mp_exp_t exp;
+
+    char* sum_as_str = mpf_get_str(NULL, &exp, 10, 0, sum);
+    if (sum_as_str == NULL) {
+        printf("Error converting sum to string\n");
+        exit(1);
+    }
+
+    int str_len = strlen(sum_as_str);
+
+    printf("sum_as_str: %s\n", sum_as_str);
+    printf("sum_as_str len: %d\n", str_len);
+
+    ret = MPI_Gather(sum_as_str, str_len, MPI_CHAR, result, str_len, MPI_CHAR, 0, MPI_COMM_WORLD);
     if (ret != MPI_SUCCESS) {
-        printf("Error: MPI_Reduce failure\n");
+        printf("Error: MPI_Gather failure\n");
         exit(1);
     }
 
@@ -141,7 +160,6 @@ int main(int argc, char** argv) {
     free(result);
 
     MPI_Finalize();
-
 
 
     return 0;
