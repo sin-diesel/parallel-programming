@@ -9,6 +9,8 @@
 #define MAX_STR_SIZE 4096
 #define DEFAULT_PREC 100
 
+const char* decimal = "0.";
+
 int main(int argc, char** argv) {
 
     int commsize = 0;
@@ -128,6 +130,12 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    ret = MPI_Send(&exp, 1, MPI_LONG, 0, 0, MPI_COMM_WORLD);
+    if (ret != MPI_SUCCESS) {
+        printf("Error: MPI_Send failure\n");
+        exit(1);
+    }
+
     // end_time = MPI_Wtime();
 
     // double interval = end_time - start_time;
@@ -144,6 +152,31 @@ int main(int argc, char** argv) {
 
         printf("Received string: %s\n", result);
 
+        // add 0.1 string to the beginning of converted string
+        char* tmp_result = strdup(decimal);
+        printf("tmp_result after strdup: %s\n", tmp_result);
+
+        char tmp[MAX_STR_SIZE];
+
+        // пиздец.
+        strcpy(tmp, result);
+        memset(result, '\0', MAX_STR_SIZE);
+        strcpy(result, decimal);
+        strcat(result, tmp);
+
+        printf("After this shit: %s\n", result);
+
+        mp_exp_t exp;
+
+        ret = MPI_Recv(&exp, 1, MPI_LONG, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (ret != MPI_SUCCESS) {
+            printf("Error: MPI_Recv failure\n");
+            exit(1);
+        }
+
+        printf("Received exponent: %ld\n", exp);
+
+
         // try print first element
         mpf_t first_elem;
 
@@ -151,7 +184,7 @@ int main(int argc, char** argv) {
         if (ret != 0) {
             printf("Error converting string to sum\n");
             exit(1);
-        }   
+        } 
 
         //printf("Time taken: %f\n", interval);
         gmp_printf("Calculated value: %Ff\n", first_elem);
