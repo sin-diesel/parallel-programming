@@ -51,17 +51,7 @@ int main(int argc, char** argv) {
 
     int N = atoi(argv[1]);
 
-    mpf_t* result = (mpf_t*) calloc(N, sizeof(mpf_t));
-    if (result == NULL) {
-        printf("Error in calloc for mpf_t* result\n");
-    }
-
-    for (int i = 0; i < N; ++i) {
-
-        mpf_init(result[i]);
-        mpf_set_d(result[i], 0.0);
-
-    }
+    char* result = (char*) calloc(MAX_STR_SIZE, sizeof(char));
 
     if (rank == 0) {
 
@@ -125,39 +115,53 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    printf("Resulting exponent: %ld\n", exp);
+
     int str_len = strlen(sum_as_str);
 
     printf("sum_as_str: %s\n", sum_as_str);
     printf("sum_as_str len: %d\n", str_len);
 
-    ret = MPI_Gather(sum_as_str, str_len, MPI_CHAR, result, str_len, MPI_CHAR, 0, MPI_COMM_WORLD);
+    ret = MPI_Send(sum_as_str, str_len, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
     if (ret != MPI_SUCCESS) {
-        printf("Error: MPI_Gather failure\n");
+        printf("Error: MPI_Send failure\n");
         exit(1);
     }
 
-    end_time = MPI_Wtime();
+    // end_time = MPI_Wtime();
 
-    double interval = end_time - start_time;
+    // double interval = end_time - start_time;
 
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == 0) {
 
-        printf("Time taken: %f\n", interval);
-        fflush(stdout);
-        gmp_printf("Calculated value: %Ff\n", result);
+        ret = MPI_Recv(result, str_len, MPI_CHAR, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        if (ret != MPI_SUCCESS) {
+            printf("Error: MPI_Recv failure\n");
+            exit(1);
+        }
+
+        printf("Received string: %s\n", result);
+
+        // try print first element
+        mpf_t first_elem;
+
+        ret = mpf_init_set_str(first_elem, result, 10);
+        if (ret != 0) {
+            printf("Error converting string to sum\n");
+            exit(1);
+        }   
+
+        //printf("Time taken: %f\n", interval);
+        gmp_printf("Calculated value: %Ff\n", first_elem);
         fflush(stdout);
 
     }
 
     mpf_clear(partial_sum);
     mpf_clear(sum);
-
-    for (int i = 0; i < N; ++i) {
-        mpf_clear(result[i]);  
-    }
-    free(result);
+    // free(result);
 
     MPI_Finalize();
 
