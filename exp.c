@@ -6,9 +6,11 @@
 #include <mpi.h>
 #include <string.h>
 
-#define MAX_STR_SIZE 4096
-#define DEFAULT_PREC 100
+#define MAX_STR_SIZE 10000
 
+#define DEBUG
+
+// This must be appended before converted as THERE IS NO OTHER WAY AROUND
 const char* decimal = "0.";
 
 int main(int argc, char** argv) {
@@ -24,12 +26,11 @@ int main(int argc, char** argv) {
     mpf_t partial_sum;
     mpf_t sum;
 
-    // create mpi struct for passing big numbers
     int count = 1;
 
     mpf_set_default_prec(DEFAULT_PREC);
 
-
+    // create mpi struct for passing big numbers
     mpf_init(partial_sum);
     mpf_init(sum);
 
@@ -89,20 +90,31 @@ int main(int argc, char** argv) {
 
         }
 
-        //gmp_printf("factorial[%d] = %Ff\n", process_id, factorial);
-        //fflush(stdout);
+        #ifdef DEBUG
+
+        gmp_printf("factorial[%d] = %Ff\n", process_id, factorial);
+        fflush(stdout);
+
+        #endif
 
         mpf_set_d(fop, 1.0);
         mpf_div(partial_sum, fop, factorial);
 
-        // gmp_printf("partial_sum[%d] = %.*Ff\n", process_id, DEFAULT_PREC, partial_sum);
-        // fflush(stdout);
+        #ifdef DEBUG
+
+        gmp_printf("partial_sum[%d] = %.*Ff\n", process_id, DEFAULT_PREC, partial_sum);
+        fflush(stdout);
+
+        #endif
 
         mpf_add(sum, sum, partial_sum);
+
+        #ifdef DEBUG
 
         gmp_printf("sum[%d] = %.*Ff\n", process_id, DEFAULT_PREC, sum);
         fflush(stdout);
 
+        #endif
     }
 
     mpf_clear(factorial);
@@ -117,12 +129,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    printf("Resulting exponent: %ld\n", exp);
-
     int str_len = strlen(sum_as_str);
-
-    printf("sum_as_str: %s\n", sum_as_str);
-    printf("sum_as_str len: %d\n", str_len);
 
     ret = MPI_Send(sum_as_str, str_len, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
     if (ret != MPI_SUCCESS) {
@@ -136,65 +143,85 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    // end_time = MPI_Wtime();
-
-    // double interval = end_time - start_time;
-
     MPI_Barrier(MPI_COMM_WORLD);
 
     if (rank == 0) {
 
-        ret = MPI_Recv(result, str_len, MPI_CHAR, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        if (ret != MPI_SUCCESS) {
-            printf("Error: MPI_Recv failure\n");
-            exit(1);
+        mpf_t mpf_result;
+        mpf_init(mpf_result);
+        mpf_set_d(mpf_result, 0.0);
+
+        // receive message from all processes
+        for (int process_id = 0; process_id < commsize; ++process_id) {
+
+            mp_exp_t exp;
+
+            ret = MPI_Recv(result, str_len, MPI_CHAR, process_id, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            if (ret != MPI_SUCCESS) {
+                printf("Error: MPI_Recv failure\n");
+                exit(1);
+            }
+
+            ret = MPI_Recv(&exp, 1, MPI_LONG, process_id, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            if (ret != MPI_SUCCESS) {
+                printf("Error: MPI_Recv failure\n");
+                exit(1);
+            }
+
+            #ifdef DEBUG
+
+            printf("Received string: %s\n", result);
+            printf("Received exponent: %ld\n", exp);
+
+            #endif
+
+            // add 0.1 string to the beginning of converted string
+            char* tmp_result = strdup(decimal);
+
+            char tmp[MAX_STR_SIZE];
+
+            // пиздец.
+            strcpy(tmp, result);
+            memset(result, '\0', MAX_STR_SIZE);
+            strcpy(result, decimal);
+            strcat(result, tmp);
+
+            mpf_t mpf_tmp;
+
+            ret = mpf_init_set_str(mpf_tmp, result, 10);
+            if (ret != 0) {
+                printf("Error converting string to mpf type\n");
+                exit(1);
+            } 
+
+            #ifdef DEBUG
+            printf("After this shit: %s\n", result);
+            gmp_printf("After this shit with gmp_printf: %Ff\n", mpf_tmp);
+            #endif
+
+            if (exp == 1) {
+
+                mpf_mul_ui(mpf_tmp, mpf_tmp, 10);
+
+                #ifdef DEBUG
+                gmp_printf("mpf_tmp after mul: %Ff\n", mpf_tmp);
+                #endif
+
+            }
+
+
+            mpf_add(mpf_result, mpf_result, mpf_tmp);
         }
 
-        printf("Received string: %s\n", result);
-
-        // add 0.1 string to the beginning of converted string
-        char* tmp_result = strdup(decimal);
-        printf("tmp_result after strdup: %s\n", tmp_result);
-
-        char tmp[MAX_STR_SIZE];
-
-        // пиздец.
-        strcpy(tmp, result);
-        memset(result, '\0', MAX_STR_SIZE);
-        strcpy(result, decimal);
-        strcat(result, tmp);
-
-        printf("After this shit: %s\n", result);
-
-        mp_exp_t exp;
-
-        ret = MPI_Recv(&exp, 1, MPI_LONG, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        if (ret != MPI_SUCCESS) {
-            printf("Error: MPI_Recv failure\n");
-            exit(1);
-        }
-
-        printf("Received exponent: %ld\n", exp);
-
-
-        // try print first element
-        mpf_t first_elem;
-
-        ret = mpf_init_set_str(first_elem, result, 10);
-        if (ret != 0) {
-            printf("Error converting string to sum\n");
-            exit(1);
-        } 
-
-        //printf("Time taken: %f\n", interval);
-        gmp_printf("Calculated value: %Ff\n", first_elem);
-        fflush(stdout);
+        gmp_printf("Trahatsa zhopa penis blinchiki: %.*Ff\n", DEFAULT_PREC, mpf_result);
 
     }
 
     mpf_clear(partial_sum);
     mpf_clear(sum);
-    // free(result);
+    mpf_clear(result);
+
+    free(tmp_result);
 
     MPI_Finalize();
 
