@@ -8,7 +8,7 @@
 
 #define MAX_STR_SIZE 10000
 
-#define DEBUG
+//#define DEBUG
 
 // This must be appended before converted as THERE IS NO OTHER WAY AROUND
 const char* decimal = "0.";
@@ -28,7 +28,9 @@ int main(int argc, char** argv) {
 
     int count = 1;
 
-    mpf_set_default_prec(DEFAULT_PREC);
+    int N = atoi(argv[1]);
+
+    mpf_set_default_prec(N);
 
     // create mpi struct for passing big numbers
     mpf_init(partial_sum);
@@ -51,8 +53,6 @@ int main(int argc, char** argv) {
         printf("usage: ./a.out <precision>\n");
         exit(1);
     }
-
-    int N = atoi(argv[1]);
 
     char* result = (char*) calloc(MAX_STR_SIZE, sizeof(char));
 
@@ -79,7 +79,10 @@ int main(int argc, char** argv) {
     mpz_t iop;
     mpz_init(iop);
 
-    for (int process_id = rank; process_id < N; process_id += commsize) {
+    int current_precision = 0;
+    int process_id = rank;
+
+    while (current_precision < N) {
 
         for (int i = 1; i <= process_id; ++i) {
 
@@ -89,6 +92,8 @@ int main(int argc, char** argv) {
             mpf_mul(factorial, factorial, fop);
 
         }
+
+        process_id += commsize;
 
         #ifdef DEBUG
 
@@ -102,19 +107,23 @@ int main(int argc, char** argv) {
 
         #ifdef DEBUG
 
-        gmp_printf("partial_sum[%d] = %.*Ff\n", process_id, DEFAULT_PREC, partial_sum);
+        gmp_printf("partial_sum[%d] = %.*Ff\n", process_id, N, partial_sum);
         fflush(stdout);
 
         #endif
 
         mpf_add(sum, sum, partial_sum);
 
-        #ifdef DEBUG
-
-        gmp_printf("sum[%d] = %.*Ff\n", process_id, DEFAULT_PREC, sum);
+        // #ifdef DEBUG
+        
+        gmp_printf("sum[%d] = %.*Ff\n", process_id, N, sum);
         fflush(stdout);
 
-        #endif
+        // #endif
+
+        current_precision++;
+        //printf("current_precision: %d\n", current_precision);
+
     }
 
     mpf_clear(factorial);
@@ -211,17 +220,21 @@ int main(int argc, char** argv) {
 
 
             mpf_add(mpf_result, mpf_result, mpf_tmp);
+
+            free(tmp_result);
+
+
         }
 
-        gmp_printf("Trahatsa zhopa penis blinchiki: %.*Ff\n", DEFAULT_PREC, mpf_result);
+        gmp_printf("Trahatsa zhopa penis blinchiki: %.*Ff\n", N, mpf_result);
 
-    }
+        mpf_clear(mpf_result);
+    }   
 
     mpf_clear(partial_sum);
     mpf_clear(sum);
-    mpf_clear(result);
 
-    free(tmp_result);
+    free(result);
 
     MPI_Finalize();
 
