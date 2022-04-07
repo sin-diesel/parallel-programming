@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <mpi.h>
 #include <assert.h>
+#include <time.h>
 
 enum {
     MAX_SIZE = 1000,
@@ -14,6 +15,8 @@ struct test_t {
     int size;
 
 };
+
+typedef void (*init_case)(int*, int);
 
 void quick_sort(int* array, int low, int high);
 
@@ -93,26 +96,57 @@ void dump_array(int* array, int size) {
 
 }
 
+void init_worst_case(int* test_arr, int size) {
+
+    for (int i = 0; i < size; ++i) {
+        test_arr[i] = size - i;
+    }
+
+}
+
+void init_average_case(int* test_arr, int size) {
+
+    for (int i = 0; i < size; ++i) {
+        test_arr[i] = rand() % size;
+    }
+
+}
 
 
-int main() {
+void test_worst(int start_size, int end_size, init_case test_case) {
 
-    int num_of_tests = 2;
+    int start_time = 0;
+    int end_time = 0;
+    double test_time = 0;
 
-    struct test_t* tests = (struct test_t*) calloc(num_of_tests, sizeof(struct test_t));
-    assert(tests != NULL);
+    for (int i = start_size; i < end_size; ++i) {
 
-    // worst case
-    int test_0[] = {10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+        int* test_arr = (int*) calloc(i, sizeof(int));
+        assert(test_arr != NULL);
+        test_case(test_arr, i);
 
-    // average case
-    int test_1[] = {1, 4, 2, 9, 5, 7, 3, 4, 10, 2, 3};
+        start_time = clock();
+        quick_sort(test_arr, 0, i);
+        end_time = clock();
 
-    test_init(&tests[0], test_0, sizeof(test_0) / sizeof(int));
-    test_init(&tests[1], test_1, sizeof(test_1) / sizeof(int));
+        test_time = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+        printf("test_time for test %d is %5lg\n", i, test_time);
 
-    test_run(tests, num_of_tests);  
+    }
 
+}
+
+
+
+
+int main() {  
+
+    srand(time(NULL));
+
+    printf("WORST CASE TESTING\n");
+    test_worst(0, 1000, &init_worst_case);
+    printf("BEST CASE TESTING\n");
+    test_worst(0, 1000, &init_average_case);
 
     return 0;
 }

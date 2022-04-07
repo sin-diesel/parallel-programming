@@ -89,10 +89,12 @@ void fill_first_layer(struct grid_t* grid) {
 void dump_grid(struct grid_t* grid) {
 
     for (int time = 0; time < grid->K; ++time) {
+
         for (int coord = 0; coord < grid->M; ++coord) {
             printf("%6.4Lg ", grid->grid[grid->K - 1 - time][coord]);
         }
         printf("\n");
+
     }
 
     printf("\n\n\n");
@@ -120,7 +122,7 @@ void fill_grid(struct grid_t* grid) {
 int main() {
 
     struct grid_t grid;
-    grid_init(10, 10, 500, 1000, &grid);
+    grid_init(10, 10, 700, 1000, &grid);
 
     fill_border_conditions(&grid);
     fill_initial_conditions(&grid);

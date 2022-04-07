@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
             mpz_set_si(iop, i);
             mpf_set_z(fop, iop);
 
-            mpf_mul(factorial, factorial, fop);
+            mpf_mul_ui(factorial, factorial, i);
 
         }
 
@@ -114,12 +114,12 @@ int main(int argc, char** argv) {
 
         mpf_add(sum, sum, partial_sum);
 
-        // #ifdef DEBUG
+        #ifdef DEBUG
         
         gmp_printf("sum[%d] = %.*Ff\n", process_id, N, sum);
         fflush(stdout);
 
-        // #endif
+        #endif
 
         current_precision++;
         //printf("current_precision: %d\n", current_precision);
@@ -204,8 +204,10 @@ int main(int argc, char** argv) {
             } 
 
             #ifdef DEBUG
+
             printf("After this shit: %s\n", result);
             gmp_printf("After this shit with gmp_printf: %Ff\n", mpf_tmp);
+
             #endif
 
             if (exp == 1) {
@@ -229,6 +231,7 @@ int main(int argc, char** argv) {
         gmp_printf("Trahatsa zhopa penis blinchiki: %.*Ff\n", N, mpf_result);
 
         mpf_clear(mpf_result);
+
     }   
 
     mpf_clear(partial_sum);
