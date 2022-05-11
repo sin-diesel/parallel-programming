@@ -3,19 +3,19 @@
 struct matrix_t {
     
     double** data; 
-    int n;      // number of rows
-    int m;      // number of cols
+    int rows;
+    int cols;
 
 };
 
 typedef struct matrix_t matrix_t;
 
 
-int matrix_init(matrix_t* matrix, int n, int m);
+int matrix_init(matrix_t* matrix, int rows, int cols);
 
-void matrix_dump(matrix_t* matrix);
+int matrix_dump(matrix_t* matrix);
 
-void matrix_fill(matrix_t* matrix, double* data);
+int matrix_fill(matrix_t* matrix, double* data, int size);
 
 
 
