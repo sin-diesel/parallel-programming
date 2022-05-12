@@ -57,3 +57,21 @@ int matrix_fill(matrix_t* matrix, double* data, int size) {
     return 0;
 }
 
+matrix_t matrix_add(matrix_t* lhs, matrix_t* rhs) {
+
+    assert(lhs->rows == rhs->rows);
+    assert(lhs->cols == rhs->cols);
+    assert(lhs->data != rhs->data);
+
+    matrix_t result;
+    matrix_init(&result, lhs->rows, lhs->cols);
+
+    for (int row = 0; row < lhs->rows; ++row) {
+        for (int col = 0; col < lhs->cols; ++col) {
+            result.data[row][col] = lhs->data[row][col] + rhs->data[row][col];
+        }
+    }
+
+    return result;
+}
+
