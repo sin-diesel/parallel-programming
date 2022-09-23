@@ -7,11 +7,31 @@ struct grid_t {
 
 };
 
-typedef struct grid_t grid;
+struct coord_t {
 
-int grid_init(grid* grid, char* filename);
+    int x;
+    int y;
 
-void grid_dump(grid* grid);
+};
 
-void grid_destruct(grid* grid);
+typedef struct coord_t coord_t;
+
+typedef struct grid_t grid_t;
+
+void grid_init(grid_t* grid, char* filename);
+
+void grid_dump(grid_t* grid);
+
+void grid_destruct(grid_t* grid);
+
+void grid_solve(grid_t* grid);
+
+void grid_elimination(grid_t* grid);
+
+void grid_remove_lone_rangers(grid_t* grid);
+
+void grid_remove_twins(grid_t* grid);
+
+void grid_remove_triplets(grid_t* grid);
+
 

@@ -14,8 +14,11 @@ int main (int argc, char** argv) {
 
     char* grid_file = argv[1];
 
-    grid grid;
+    grid_t grid;
     grid_init(&grid, grid_file);
+
+    grid_solve(&grid);
+
     grid_dump(&grid);
     grid_destruct(&grid);
 
