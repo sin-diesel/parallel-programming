@@ -80,7 +80,7 @@ worker_t* get_workers(grid_t* grid, int threads_num) {
     // Make diagonal starts
     int split_size = grid->size / half_threads;
 
-    for (int thread_num = 0; thread_num < half_threads; ++thread_num) {
+    for (int thread_num = 0; thread_num < half_threads - 1; ++thread_num) {
         worker_init(&workers[thread_num], thread_num * split_size, thread_num * split_size, ROWS, split_size, split_size);
     }
 
@@ -93,17 +93,21 @@ worker_t* get_workers(grid_t* grid, int threads_num) {
 
     // Place column workers on remaining places to contol column
     split_size = (grid->size - workers[0].grid_size_x) / (half_threads - 1);
-    for (int thread_num = half_threads; thread_num < threads_num - 1; ++thread_num) {
-        worker_init(&workers[thread_num], thread_num * split_size, 0, COLS, split_size, split_size);
+    printf("split size for cols workers: %d\n", split_size);
+    int thread_ordered_num = 1;
+    for (int thread_num = half_threads; thread_num < threads_num - 2; ++thread_num) {
+        printf("thread_num: %d\n", thread_num);
+        worker_init(&workers[thread_num], thread_ordered_num * split_size, 0, COLS, split_size, split_size);
+        ++thread_ordered_num;
     }
 
     // last - 1 cols worker gets remaining portion of work
-    worker_init(&workers[threads_num - 2], (threads_num - 1) * split_size, 0,
+    worker_init(&workers[threads_num - 2], (half_threads - 1) * split_size, 0,
                                                                             COLS,
-                                                                            grid->size - (threads_num - 1) * split_size,
-                                                                            grid->size - (threads_num - 1) * split_size);
+                                                                            grid->size - (half_threads - 1) * split_size ,
+                                                                            grid->size - (half_threads - 1) * split_size);
     // last cols worker gets last unchecked cols
-    worker_init(&workers[threads_num - 1], 0, workers[0].grid_size_y, COLS, workers[0].grid_size_x, grid->size - workers[0].grid_size_y);
+    worker_init(&workers[threads_num - 1], 0, workers[0].grid_size_y, COLS, workers[0].grid_size_x, workers[1].grid_size_y);
     return workers;
 }
 
