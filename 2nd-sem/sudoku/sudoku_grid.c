@@ -16,18 +16,18 @@ void grid_init(grid_t* grid, char* filename) {
     assert(res == 1);
 
     grid->size = grid_size;
-    int** grid_data = (int**) calloc(grid->size, sizeof(int*));
+    value_t** grid_value = (value_t**) calloc(grid->size, sizeof(value_t*));
     for (int i = 0; i < grid->size; ++i) {
-        grid_data[i] = (int*) calloc(grid->size, sizeof(int));
+        grid_value[i] = (value_t*) calloc(grid->size, sizeof(value_t));
     }
 
     for (int row = 0; row < grid_size; ++row) {
         for (int col = 0; col < grid_size; ++col) {
-            fscanf(file,  "%d", &grid_data[row][col]);
+            fscanf(file,  "%d", &grid_value[row][col].known_value);
         }
     }
 
-    grid->grid = grid_data;
+    grid->grid = grid_value;
 
 }
 
@@ -39,7 +39,7 @@ void grid_dump(grid_t* grid) {
 
     for (int row = 0; row < grid->size; ++row) {
         for (int col = 0; col < grid->size; ++col) {
-            printf("%3d ", grid->grid[row][col]);
+            printf("%3d ", grid->grid[row][col].known_value);
         }
         printf("\n");
     }
@@ -111,6 +111,38 @@ worker_t* get_workers(grid_t* grid, int threads_num) {
     return workers;
 }
 
+// void grid_elimination(grid_t* grid, worker_t* worker) {
+    
+//     int start_x = worker->start.x;
+//     int start_y = worker->start.y;
+
+//     if (worker->type == ROWS) {
+//         int count = 0;
+//         for (int row = start_y; row < start_y + worker->grid_size_y; ++row) {
+//             for (int col = 0; col < grid->size; ++col) {
+//                 value_t values = grid[row][col];
+//                 printf("Values in (%d, %d) :\n". row, col);
+//                 for (int vale_idx = 0; value_idx < values.size; ++value_idx) {
+//                     printf("%d ", values.data[value_idx])
+//                 }
+//                 printf("\n");
+//             }
+//         }
+
+//     } else {
+
+//     }
+
+// }
+
+// void grid_remove_lone_rangers(grid_t* grid, worker_t* worker) {
+
+//     if (worker->type == ROWS) {
+//         return;
+//     }
+// }
+
+
 void grid_solve(grid_t* grid) {
 
     int workers_count = 0;
@@ -133,21 +165,24 @@ void grid_solve(grid_t* grid) {
 
     }
 
-    #pragma omp parallel
-    {
+    // #pragma omp parallel
+    // {
 
-    int worker_num = omp_get_thread_num();
-    int worker_grid_size = grid->size / workers_count;
+    // int worker_num = omp_get_thread_num();
+    // int worker_grid_size = grid->size / workers_count;
 
-    if (worker_num == workers_count - 1) {
-        worker_grid_size = worker_grid_size + grid->size % workers_count;
-    }
+    // if (worker_num == workers_count - 1) {
+    //     worker_grid_size = worker_grid_size + grid->size % workers_count;
+    // }
 
-    printf("workers num: %u\n", worker_num);
-    printf("workers_grid_size: %u\n", worker_grid_size);
+    // printf("workers num: %u\n", worker_num);
+    // printf("workers_grid_size: %u\n", worker_grid_size);
 
-    }
-    // grid_remove_lone_rangers(grid);
+    // }
+    // #pragma omp parallel for
+    // for (int worker_num = 0; worker_num < workers_count; ++worker_num) {
+    //     grid_remove_lone_rangers(grid, &workers[worker_num]);
+    // }
     // grid_remove_twins(grid);
     // grid_remove_triplets(grid);
 

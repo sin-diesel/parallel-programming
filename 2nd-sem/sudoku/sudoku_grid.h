@@ -1,4 +1,4 @@
-
+#pragma once
 
 enum work_directions {
 
@@ -7,9 +7,20 @@ enum work_directions {
 
 };
 
+struct value_t {
+
+    int* values;
+    int size;
+    int known_value;
+
+};
+
+typedef struct value_t value_t;
+
+
 struct grid_t {
 
-    int** grid;
+    value_t** grid;
     int size;
 
 };
@@ -44,9 +55,9 @@ void grid_destruct(grid_t* grid);
 
 void grid_solve(grid_t* grid);
 
-void grid_elimination(grid_t* grid);
+void grid_elimination(grid_t* grid, worker_t* worker);
 
-void grid_remove_lone_rangers(grid_t* grid);
+void grid_remove_lone_rangers(grid_t* grid, worker_t* worker);
 
 void grid_remove_twins(grid_t* grid);
 
