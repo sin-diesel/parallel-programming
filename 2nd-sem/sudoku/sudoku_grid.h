@@ -1,5 +1,7 @@
 #pragma once
 
+#define VALUE_EXISTS 1
+
 enum work_directions {
 
     ROWS = 1,

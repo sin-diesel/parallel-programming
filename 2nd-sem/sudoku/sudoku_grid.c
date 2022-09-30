@@ -27,6 +27,31 @@ void grid_init(grid_t* grid, char* filename) {
         }
     }
 
+    // For every num, check if it is present in row/col. If not, than add it to array of
+    // possible values to every cell in a row/col
+    int* possible_values = (int*) calloc(grid->size, sizeof(int));
+    assert(possible_values != NULL);
+    for (int value = 0; value < grid->size; ++value) {
+        possible_values[value] = VALUE_EXISTS;
+    }
+
+    for (int row = 0; row < grid->size; ++row) {
+        for (int num = 0; num < grid->size; ++num) {
+
+            int found = find(grid->grid[row], num);
+            if (found) {
+                for (int col = 0; col < grid->size; ++col) {
+                    possible_values[num] = 0;
+                }
+            }
+
+        }
+
+        for (int col = 0; col < grid->size; ++col) {
+            grid->grid[row][col].values = possible_values;
+        }
+    }
+
     grid->grid = grid_value;
 
 }
@@ -111,29 +136,31 @@ worker_t* get_workers(grid_t* grid, int threads_num) {
     return workers;
 }
 
-// void grid_elimination(grid_t* grid, worker_t* worker) {
+void grid_elimination(grid_t* grid, worker_t* worker) {
     
-//     int start_x = worker->start.x;
-//     int start_y = worker->start.y;
+    int start_x = worker->start.x;
+    int start_y = worker->start.y;
 
-//     if (worker->type == ROWS) {
-//         int count = 0;
-//         for (int row = start_y; row < start_y + worker->grid_size_y; ++row) {
-//             for (int col = 0; col < grid->size; ++col) {
-//                 value_t values = grid[row][col];
-//                 printf("Values in (%d, %d) :\n". row, col);
-//                 for (int vale_idx = 0; value_idx < values.size; ++value_idx) {
-//                     printf("%d ", values.data[value_idx])
-//                 }
-//                 printf("\n");
-//             }
-//         }
+    if (worker->type == ROWS) {
 
-//     } else {
+        for (int row = start_y; row < start_y + worker->grid_size_y; ++row) {
+            for (int col = 0; col < grid->size; ++col) {
 
-//     }
+                value_t values = grid->grid[row][col];
+                printf("Values in (%d, %d):\n", row, col);
+                for (int value_idx = 0; value_idx < values.size; ++value_idx) {
+                    printf("%d ", values.values[value_idx]);
+                }
+                printf("\n");
 
-// }
+            }
+        }
+
+    } else {
+
+    }
+
+}
 
 // void grid_remove_lone_rangers(grid_t* grid, worker_t* worker) {
 
@@ -179,10 +206,10 @@ void grid_solve(grid_t* grid) {
     // printf("workers_grid_size: %u\n", worker_grid_size);
 
     // }
-    // #pragma omp parallel for
-    // for (int worker_num = 0; worker_num < workers_count; ++worker_num) {
-    //     grid_remove_lone_rangers(grid, &workers[worker_num]);
-    // }
+    #pragma omp parallel for
+    for (int worker_num = 0; worker_num < workers_count; ++worker_num) {
+        grid_elimination(grid, &workers[worker_num]);
+    }
     // grid_remove_twins(grid);
     // grid_remove_triplets(grid);
 
