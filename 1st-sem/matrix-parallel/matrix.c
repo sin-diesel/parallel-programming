@@ -47,7 +47,6 @@ int matrix_fill(matrix_t* matrix, double* data, int size) {
         printf("Error: wrong array size passed to matrix_fill().");
         return -1;
     }
-
     for (int row = 0; row < matrix->rows; ++row) {
         for (int col = 0; col < matrix->cols; ++col) {
             matrix->data[row][col] = *(data + col + row * matrix->rows);
@@ -73,5 +72,26 @@ matrix_t matrix_add(matrix_t* lhs, matrix_t* rhs) {
     }
 
     return result;
+}
+
+matrix_t matrix_mult(matrix_t* lhs, matrix_t* rhs) {
+
+    assert(lhs->cols == rhs->rows);
+    assert(lhs->data != rhs->data);
+
+    matrix_t result;
+    matrix_init(&result, lhs->rows, rhs->cols);
+
+    double c = 0;
+    for (int row_lhs = 0; row_lhs < lhs->rows; ++row_lhs) {
+        for (int row_rhs = 0; row_rhs < rhs->rows; ++row_rhs) {
+            double elem = lhs->data[row_rhs][row_lhs];
+            for (int idx = 0; idx < rhs->rows; ++idx) {
+                result.data[row_rhs][idx] += elem * rhs->data[row_lhs][idx];
+            }
+        }
+    }
+
+    matrix_dump(&result);
 }
 

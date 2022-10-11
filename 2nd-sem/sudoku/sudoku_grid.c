@@ -4,6 +4,17 @@
 #include <stdlib.h>
 #include <omp.h>
 #include "sudoku_grid.h"
+#include "list.h"
+
+int find(value_t* array, int size, int data) {
+    for (int idx = 0; idx < size; ++idx) {
+        if (array[idx].known_value == data) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 
 void grid_init(grid_t* grid, char* filename) {
 
@@ -23,9 +34,13 @@ void grid_init(grid_t* grid, char* filename) {
 
     for (int row = 0; row < grid_size; ++row) {
         for (int col = 0; col < grid_size; ++col) {
-            fscanf(file,  "%d", &grid_value[row][col].known_value);
+            int value = 0;
+            fscanf(file,  "%d", &value);
+            value_init(&grid_value[row][col], value);
         }
     }
+
+    fclose(file);
 
     // For every num, check if it is present in row/col. If not, than add it to array of
     // possible values to every cell in a row/col
@@ -38,17 +53,17 @@ void grid_init(grid_t* grid, char* filename) {
     for (int row = 0; row < grid->size; ++row) {
         for (int num = 0; num < grid->size; ++num) {
 
-            int found = find(grid->grid[row], num);
+            int found = find(grid->grid[row], grid->size, num);
             if (found) {
                 for (int col = 0; col < grid->size; ++col) {
                     possible_values[num] = 0;
                 }
             }
 
-        }
+            for (int col = 0; col < grid->size; ++col) {
+                
+            }
 
-        for (int col = 0; col < grid->size; ++col) {
-            grid->grid[row][col].values = possible_values;
         }
     }
 
@@ -136,38 +151,38 @@ worker_t* get_workers(grid_t* grid, int threads_num) {
     return workers;
 }
 
-void grid_elimination(grid_t* grid, worker_t* worker) {
-    
-    int start_x = worker->start.x;
-    int start_y = worker->start.y;
-
-    if (worker->type == ROWS) {
-
-        for (int row = start_y; row < start_y + worker->grid_size_y; ++row) {
-            for (int col = 0; col < grid->size; ++col) {
-
-                value_t values = grid->grid[row][col];
-                printf("Values in (%d, %d):\n", row, col);
-                for (int value_idx = 0; value_idx < values.size; ++value_idx) {
-                    printf("%d ", values.values[value_idx]);
-                }
-                printf("\n");
-
-            }
-        }
-
-    } else {
-
-    }
-
+void value_init(value_t* value, int known_value) {
+    list_init(value->values);
+    value->known_value = known_value;
 }
 
-// void grid_remove_lone_rangers(grid_t* grid, worker_t* worker) {
 
-//     if (worker->type == ROWS) {
-//         return;
-//     }
+// void grid_elimination(grid_t* grid, worker_t* worker) {
+    
+//     //int start_x = worker->start.x;
+//     // int start_y = worker->start.y;
+
+//     // if (worker->type == ROWS) {
+
+//     //     for (int row = start_y; row < start_y + worker->grid_size_y; ++row) {
+//     //         for (int col = 0; col < grid->size; ++col) {
+
+//     //             value_t values = grid->grid[row][col];
+//     //             printf("Values in (%d, %d):\n", row, col);
+//     //             for (int value_idx = 0; value_idx < values.size; ++value_idx) {
+//     //                 printf("%d ", values.values[value_idx]);
+//     //             }
+//     //             printf("\n");
+
+//     //         }
+//     //     }
+
+//     // } else {
+
+//     // }
+
 // }
+
 
 
 void grid_solve(grid_t* grid) {
@@ -192,26 +207,9 @@ void grid_solve(grid_t* grid) {
 
     }
 
-    // #pragma omp parallel
-    // {
-
-    // int worker_num = omp_get_thread_num();
-    // int worker_grid_size = grid->size / workers_count;
-
-    // if (worker_num == workers_count - 1) {
-    //     worker_grid_size = worker_grid_size + grid->size % workers_count;
+    // #pragma omp parallel for
+    // for (int worker_num = 0; worker_num < workers_count; ++worker_num) {
+    //     grid_elimination(grid, &workers[worker_num]);
     // }
-
-    // printf("workers num: %u\n", worker_num);
-    // printf("workers_grid_size: %u\n", worker_grid_size);
-
-    // }
-    #pragma omp parallel for
-    for (int worker_num = 0; worker_num < workers_count; ++worker_num) {
-        grid_elimination(grid, &workers[worker_num]);
-    }
-    // grid_remove_twins(grid);
-    // grid_remove_triplets(grid);
-
 }
 

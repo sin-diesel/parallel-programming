@@ -1,4 +1,5 @@
 #pragma once
+#include "list.h"
 
 #define VALUE_EXISTS 1
 
@@ -11,7 +12,7 @@ enum work_directions {
 
 struct value_t {
 
-    int* values;
+    list_t* values;
     int size;
     int known_value;
 
@@ -66,6 +67,8 @@ void grid_remove_twins(grid_t* grid);
 void grid_remove_triplets(grid_t* grid);
 
 void worker_init(worker_t* worker, int start_x, int start_y, int worker_type, int grid_size_x, int grid_size_y);
+
+void value_init(value_t* value, int known_value);
 
 worker_t* get_workers(grid_t* grid, int threads_num);
 
