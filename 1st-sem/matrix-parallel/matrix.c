@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
+#include <immintrin.h>
 #include "matrix.h"
 
 
@@ -85,13 +86,21 @@ matrix_t matrix_mult(matrix_t* lhs, matrix_t* rhs) {
     double c = 0;
     for (int row_lhs = 0; row_lhs < lhs->rows; ++row_lhs) {
         for (int row_rhs = 0; row_rhs < rhs->rows; ++row_rhs) {
+
             double elem = lhs->data[row_rhs][row_lhs];
-            for (int idx = 0; idx < rhs->rows; ++idx) {
-                result.data[row_rhs][idx] += elem * rhs->data[row_lhs][idx];
+            __m256 factor = _mm256_broadcast_ss(&elem);
+            double tmp_mul[8];
+            double tmp_add;
+            // TODO: Vectorize
+            for (int idx = 0; idx < rhs->rows; idx += 8) {
+                __m256 first = _mm256_load_ps(&rhs->data[row_lhs][idx]);
+                __m256 res = _mm256_mul_ps(first, factor;
+                _mm256_store_ps(tmp_mul, res);
+                // tmp_add += tmp_mul;
+                // result.data[row_rhs][idx] += elem * rhs->data[row_lhs][idx];
             }
         }
     }
-
     matrix_dump(&result);
 }
 
