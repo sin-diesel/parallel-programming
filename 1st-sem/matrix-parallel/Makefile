@@ -2,4 +2,4 @@
 SOURCES=$(wildcard *.c)
 
 all: $(SOURCES)
-	gcc $^ -o matrix_mult
+	gcc -g $^ -mavx -o matrix_mult
