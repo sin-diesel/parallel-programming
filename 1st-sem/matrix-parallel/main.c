@@ -27,7 +27,7 @@ int main() {
     #ifndef VECTORIZE
     matrix_dump(&res);
     #endif
-    //matrix_dump(&res);
+    matrix_dump(&res);
 
     matrix_destroy(&A);
     matrix_destroy(&B);

@@ -1,8 +1,11 @@
 
 SOURCES=$(wildcard *.c)
 
+vector: avx.c
+	gcc -g  -mavx -march=native -O3 avx.c -o matrix_mult
+
 avx: $(SOURCES)
-	gcc -g $^ -mavx -msse4.1 -march=native -DVECTORIZE -o matrix_mult
+	gcc -g $^ -mavx -msse4.1 -march=znver1  -DVECTORIZE -o matrix_mult
 
 standart: $(SOURCES)
 	gcc -g $^ -fsanitize=address -o matrix_mult
