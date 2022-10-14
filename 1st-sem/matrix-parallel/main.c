@@ -9,20 +9,15 @@ int main() {
     matrix_t A;
     matrix_t B;
 
-    int rows = 100;
-    int cols = 100;
+    int rows = 110;
+    int cols = 110;
     int matrix_size = rows * cols;
-
-    float* data = (float*) calloc(matrix_size, sizeof(float));
-    for (int idx = 0; idx < matrix_size; ++idx) {
-        data[idx] = idx;
-    }
 
     matrix_init(&A, rows, cols);
     matrix_init(&B, rows, cols);
 
-    matrix_fill(&A, data, matrix_size);
-    matrix_fill(&B, data, matrix_size);
+    matrix_fill(&A, matrix_size);
+    matrix_fill(&B, matrix_size);
     matrix_t res = matrix_mult(&A, &B);
     #ifndef VECTORIZE
     matrix_dump(&res);
@@ -33,7 +28,7 @@ int main() {
     matrix_destroy(&B);
     //matrix_destroy(&res);
 
-    free(data);
+    //free(data);
 
     return 0;
 }

@@ -7,5 +7,5 @@ vector: avx.c
 avx: $(SOURCES)
 	gcc -g $^ -mavx -msse4.1 -march=znver1  -DVECTORIZE -o matrix_mult
 
-standart: $(SOURCES)
-	gcc -g $^ -fsanitize=address -o matrix_mult
+standart: main.c matrix.c
+	gcc -g $^ -o matrix_mult

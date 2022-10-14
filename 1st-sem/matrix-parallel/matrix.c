@@ -15,11 +15,11 @@ int matrix_init(matrix_t* matrix, int rows, int cols) {
     matrix->rows = rows;
     matrix->cols = cols;
 
-    matrix->data = (float**) calloc(matrix->rows, sizeof(float*));
+    matrix->data = (int**) calloc(matrix->rows, sizeof(int*));
     assert(matrix->data != NULL);
 
     for (int row = 0; row < matrix->rows; ++row) {
-        matrix->data[row] = (float*) calloc(matrix->cols, sizeof(float));
+        matrix->data[row] = (int*) calloc(matrix->cols, sizeof(int));
         assert(matrix->data[row] != NULL);
     }
 
@@ -38,7 +38,7 @@ int matrix_dump(matrix_t* matrix) {
 
     for (int row = 0; row < matrix->rows; ++row) {
         for (int col = 0; col < matrix->cols; ++col) {
-            printf("%.2f ", matrix->data[row][col]);
+            printf("%8d ", matrix->data[row][col]);
         }
         printf("\n");
     }
@@ -48,7 +48,7 @@ int matrix_dump(matrix_t* matrix) {
 }
 
 
-int matrix_fill(matrix_t* matrix, float* data, int size) {
+int matrix_fill(matrix_t* matrix, int size) {
         
     if (matrix->rows * matrix->cols != size) {
         printf("Error: wrong array size passed to matrix_fill().");
@@ -56,7 +56,7 @@ int matrix_fill(matrix_t* matrix, float* data, int size) {
     }
     for (int row = 0; row < matrix->rows; ++row) {
         for (int col = 0; col < matrix->cols; ++col) {
-            matrix->data[row][col] = *(data + col + row * matrix->rows);
+            matrix->data[row][col] = row + col; 
         }
     }
 
@@ -97,7 +97,6 @@ matrix_t matrix_mult(matrix_t* lhs, matrix_t* rhs) {
     __m256i vec_rhs = _mm256_setzero_si256();
 
     #endif
-    float c = 0;
     for (int row_lhs = 0; row_lhs < lhs->rows; ++row_lhs) {
         for (int row_rhs = 0; row_rhs < rhs->rows; ++row_rhs) {
 
