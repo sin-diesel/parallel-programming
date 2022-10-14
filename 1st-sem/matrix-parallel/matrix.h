@@ -12,6 +12,8 @@ typedef struct matrix_t matrix_t;
 
 int matrix_init(matrix_t* matrix, int rows, int cols);
 
+int matrix_destroy(matrix_t* matrix);
+
 int matrix_dump(matrix_t* matrix);
 
 int matrix_fill(matrix_t* matrix, float* data, int size);

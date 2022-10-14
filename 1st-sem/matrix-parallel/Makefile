@@ -1,5 +1,8 @@
 
 SOURCES=$(wildcard *.c)
 
-all: $(SOURCES)
-	gcc -g $^ -mavx -o matrix_mult
+avx: $(SOURCES)
+	gcc -g $^ -mavx -DVECTORIZE -fsanitize=address -o matrix_mult
+
+standart: $(SOURCES)
+	gcc -g $^ -fsanitize=address -o matrix_mult
