@@ -9,8 +9,8 @@ int main() {
     matrix_t A;
     matrix_t B;
 
-    int rows = 110;
-    int cols = 110;
+    int rows = 512;
+    int cols = 512  ;
     int matrix_size = rows * cols;
 
     matrix_init(&A, rows, cols);
